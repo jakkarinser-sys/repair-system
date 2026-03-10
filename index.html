@@ -46,8 +46,78 @@
     input:focus, select:focus, textarea:focus {
       outline: none; border-color: #E74C3C; background: #fff;
     }
+    input:disabled, select:disabled {
+      background: #F0F0F0; color: #999; cursor: not-allowed;
+    }
     textarea { resize: vertical; min-height: 100px; }
 
+    /* Employee ID verification */
+    .emp-row {
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+    .emp-row input { flex: 1; margin-bottom: 0; }
+    .btn-verify {
+      padding: 12px 16px; background: #2C3E50; color: white;
+      border: none; border-radius: 10px; font-size: 0.85rem;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      flex-shrink: 0; font-family: inherit;
+    }
+    .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .verify-status {
+      margin-top: 8px; padding: 8px 12px;
+      border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+      display: none;
+    }
+    .verify-ok   { background: #F0FFF4; color: #27AE60; border: 1px solid #27AE60; }
+    .verify-fail { background: #FFF0EE; color: #E74C3C; border: 1px solid #E74C3C; }
+    .verify-load { background: #EBF5FB; color: #2980B9; border: 1px solid #2980B9; }
+
+    /* Auto-filled dept badge */
+    .dept-badge {
+      display: none; margin-top: 8px;
+      background: #EBF5FB; border: 1.5px solid #2980B9;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 0.85rem; font-weight: 700; color: #1A5276;
+    }
+    .dept-badge span { font-size: 0.75rem; font-weight: 400; color: #666; }
+
+    /* Machine loading */
+    .machine-loading {
+      display: none; padding: 10px 14px;
+      background: #EBF5FB; border-radius: 10px;
+      font-size: 0.8rem; color: #2980B9; text-align: center;
+    }
+
+    /* Stop/No-stop toggle */
+    .toggle-group { display: flex; gap: 10px; }
+    .toggle-btn {
+      flex: 1; padding: 14px 8px; border-radius: 12px;
+      border: 2px solid #E0E0E0; background: #FAFAFA;
+      cursor: pointer; text-align: center; font-family: inherit;
+      transition: all .2s;
+    }
+    .toggle-btn .t-icon  { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+    .toggle-btn .t-label { font-size: 0.78rem; font-weight: 700; color: #888; }
+    .toggle-btn.sel-stop     { border-color: #E74C3C; background: #FFF0EE; }
+    .toggle-btn.sel-stop .t-label { color: #C0392B; }
+    .toggle-btn.sel-nostop   { border-color: #27AE60; background: #F0FFF4; }
+    .toggle-btn.sel-nostop .t-label { color: #27AE60; }
+
+    /* Job type checkboxes */
+    .jobtype-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .jobtype-btn {
+      flex: 1; min-width: 80px; padding: 12px 8px; border-radius: 12px;
+      border: 2px solid #E0E0E0; background: #FAFAFA;
+      cursor: pointer; text-align: center; font-family: inherit;
+      transition: all .2s;
+    }
+    .jobtype-btn .j-icon  { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .jobtype-btn .j-label { font-size: 0.75rem; font-weight: 700; color: #888; }
+    .jobtype-btn.selected { border-color: #8E44AD; background: #F5EEF8; }
+    .jobtype-btn.selected .j-label { color: #6C3483; }
+
+    /* Image upload */
     .img-upload {
       border: 2px dashed #E0E0E0; border-radius: 12px;
       padding: 24px; text-align: center; cursor: pointer;
@@ -60,6 +130,14 @@
     #previewImg { width: 100%; border-radius: 10px; margin-top: 12px; display: none; }
     .img-ok { font-size: 0.75rem; color: #27AE60; margin-top: 6px; font-weight: 600; display: none; }
 
+    /* KPI note */
+    .kpi-box {
+      background: #FFF8E1; border-left: 3px solid #F39C12;
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 0.75rem; color: #7D6608; line-height: 1.6; margin-top: 8px;
+    }
+
+    /* Submit button */
     .btn-submit {
       width: calc(100% - 32px); margin: 4px 16px 0;
       padding: 16px; background: linear-gradient(135deg, #E74C3C, #C0392B);
@@ -69,6 +147,7 @@
     }
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    /* Success screen */
     #successScreen {
       display: none; text-align: center; padding: 40px 20px;
     }
@@ -81,12 +160,7 @@
     }
     #successScreen p { font-size: 0.85rem; color: #666; line-height: 1.6; }
 
-    .kpi-box {
-      background: #FFF8E1; border-left: 3px solid #F39C12;
-      border-radius: 8px; padding: 10px 12px;
-      font-size: 0.75rem; color: #7D6608; line-height: 1.6; margin-top: 8px;
-    }
-
+    /* Loading overlay */
     #loadingOverlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.55); z-index: 999;
@@ -103,15 +177,22 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     #loadingOverlay p { color: white; font-size: 0.9rem; }
 
-    /* Debug box (ซ่อนได้ตอน production) */
+    /* Validation error */
+    .field-error input, .field-error select, .field-error textarea {
+      border-color: #E74C3C !important;
+    }
+    .err-msg {
+      font-size: 0.73rem; color: #E74C3C;
+      margin-top: 4px; display: none;
+    }
+    .field-error .err-msg { display: block; }
+
+    /* Debug */
     #debugBox {
-      display: none;
-      margin: 0 16px 8px;
-      padding: 10px 12px;
+      display: none; margin: 0 16px 8px; padding: 10px 12px;
       background: #1A252F; color: #2ECC71;
       border-radius: 10px; font-size: 0.72rem;
-      font-family: monospace; line-height: 1.7;
-      word-break: break-all;
+      font-family: monospace; line-height: 1.7; word-break: break-all;
     }
   </style>
 </head>
@@ -134,52 +215,114 @@
     <div class="note">เวลานี้คือจุดเริ่มต้นความรับผิดชอบของวิศวกรรม</div>
   </div>
 
-  <!-- ผู้แจ้งซ่อม -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CARD 1: ข้อมูลผู้แจ้งซ่อม                 -->
+  <!-- ═══════════════════════════════════════════ -->
   <div class="card">
-    <div class="card-title">📋 ข้อมูลผู้แจ้งซ่อม</div>
+    <div class="card-title">👤 ข้อมูลผู้แจ้งซ่อม</div>
 
-    <div class="field">
-      <label class="required" for="reporterName">ชื่อ-นามสกุล</label>
-      <input type="text" id="reporterName" placeholder="เช่น สมชาย ใจดี">
+    <!-- รหัสพนักงาน -->
+    <div class="field" id="field-empId">
+      <label class="required" for="empId">รหัสพนักงาน</label>
+      <div class="emp-row">
+        <input type="text" id="empId" placeholder="เช่น EMP001"
+               inputmode="text" maxlength="20"
+               onkeydown="if(event.key==='Enter'){verifyEmployee();}">
+        <button class="btn-verify" id="btnVerify" onclick="verifyEmployee()">
+          🔍 ตรวจสอบ
+        </button>
+      </div>
+      <div class="verify-status" id="verifyStatus"></div>
+      <div class="err-msg">กรุณากรอกรหัสพนักงาน</div>
     </div>
 
-    <div class="field">
-      <label class="required" for="department">แผนก</label>
-      <select id="department">
-        <option value="">— เลือกแผนก —</option>
-        <option>ผลิต A</option>
-        <option>ผลิต B</option>
-        <option>คลังสินค้า</option>
-        <option>บรรจุภัณฑ์</option>
-        <option>ยูทิลิตี้</option>
-      </select>
+    <!-- ชื่อ (auto-fill, readonly หลัง verify) -->
+    <div class="field" id="field-reporterName">
+      <label class="required" for="reporterName">ชื่อ-นามสกุล</label>
+      <input type="text" id="reporterName" placeholder="ระบบจะกรอกให้อัตโนมัติ" readonly>
+      <div class="err-msg">กรุณากรอกชื่อ-นามสกุล</div>
+    </div>
+
+    <!-- ฝ่าย/แผนก (auto-fill จาก Sheet พนักงาน) -->
+    <div class="field" id="field-department">
+      <label class="required">ฝ่าย / แผนก</label>
+      <input type="text" id="departmentDisplay" placeholder="ระบบจะกรอกให้อัตโนมัติ" readonly>
+      <input type="hidden" id="department">
+      <div class="err-msg">ไม่พบข้อมูลฝ่าย</div>
     </div>
   </div>
 
-  <!-- เครื่องจักร -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CARD 2: ข้อมูลเครื่องจักร                  -->
+  <!-- ═══════════════════════════════════════════ -->
   <div class="card">
     <div class="card-title">🏭 ข้อมูลเครื่องจักร</div>
 
-    <div class="field">
-      <label class="required" for="machineId">รหัส / ชื่อเครื่องจักร</label>
-      <input type="text" id="machineId"
-             placeholder="เช่น CNC-001, เครื่องกลึง 3, ปั๊มน้ำตึก B">
+    <!-- Dropdown เครื่องจักร (โหลดจาก Apps Script) -->
+    <div class="field" id="field-machineId">
+      <label class="required" for="machineId">เครื่องจักร / อุปกรณ์</label>
+      <div class="machine-loading" id="machineLoading">⏳ กำลังโหลดรายการเครื่องจักร...</div>
+      <select id="machineId" style="display:none;" onchange="onMachineChange()">
+        <option value="">— เลือกเครื่องจักร —</option>
+      </select>
+      <div class="err-msg">กรุณาเลือกเครื่องจักร</div>
     </div>
 
-    <div class="field">
-      <label class="required" for="symptom">อาการ / ปัญหาที่พบ</label>
+    <!-- รายละเอียด / จุดที่ต้องการซ่อม -->
+    <div class="field" id="field-symptom">
+      <label class="required" for="symptom">รายละเอียด / จุดที่ต้องการซ่อม</label>
       <textarea id="symptom"
-        placeholder="อธิบายให้ละเอียดที่สุด เช่น&#10;- เสียงดังผิดปกติที่แกนหมุน&#10;- เครื่องหยุดกะทันหัน ไฟ Error ขึ้น E-03&#10;- น้ำมันรั่วใต้เครื่อง"></textarea>
+        placeholder="อธิบายให้ละเอียด เช่น&#10;- เสียงดังผิดปกติที่แกนหมุน&#10;- ไฟ Error E-03 ขึ้น&#10;- น้ำมันรั่วใต้เครื่อง บริเวณ..."
+      ></textarea>
+      <div class="err-msg">กรุณาระบุรายละเอียด/จุดที่ต้องซ่อม</div>
+    </div>
+
+    <!-- เครื่องหยุดเดินไหม? -->
+    <div class="field" id="field-machineStop">
+      <label class="required">เครื่องหยุดเดินไหม?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" id="btn-stop" onclick="selectStop(true)">
+          <span class="t-icon">🔴</span>
+          <span class="t-label">หยุดเดิน<br>(Machine Down)</span>
+        </button>
+        <button class="toggle-btn" id="btn-nostop" onclick="selectStop(false)">
+          <span class="t-icon">🟡</span>
+          <span class="t-label">ยังเดินได้<br>(Running)</span>
+        </button>
+      </div>
+      <div class="err-msg" id="err-machineStop" style="display:none;">กรุณาเลือกสถานะเครื่อง</div>
+    </div>
+
+    <!-- ประเภทงาน -->
+    <div class="field" id="field-jobType">
+      <label class="required">ประเมินเบื้องต้น — ประเภทงาน</label>
+      <div class="jobtype-group">
+        <button class="jobtype-btn" id="jt-mech"  onclick="toggleJobType('เครื่องกล')">
+          <span class="j-icon">⚙️</span>
+          <span class="j-label">เครื่องกล</span>
+        </button>
+        <button class="jobtype-btn" id="jt-elec"  onclick="toggleJobType('ไฟฟ้า')">
+          <span class="j-icon">⚡</span>
+          <span class="j-label">ไฟฟ้า</span>
+        </button>
+        <button class="jobtype-btn" id="jt-crane" onclick="toggleJobType('เครน')">
+          <span class="j-icon">🏗️</span>
+          <span class="j-label">เครน</span>
+        </button>
+      </div>
+      <div class="err-msg" id="err-jobType" style="display:none;">กรุณาเลือกประเภทงานอย่างน้อย 1 อย่าง</div>
     </div>
 
     <div class="kpi-box">
-      ⏰ <strong>หมายเหตุ:</strong> เวลาที่ใช้วัดประสิทธิภาพวิศวกรรม (MTTR / Downtime)
+      ⏰ <strong>หมายเหตุ:</strong> เวลาที่ใช้วัด MTTR / Downtime
       จะเริ่มนับตั้งแต่กด Submit — หากทราบว่าเครื่องเสียมาก่อนหน้านี้
       ช่วงเวลาก่อนแจ้งถือเป็นความรับผิดชอบของฝ่ายผลิต
     </div>
   </div>
 
-  <!-- รูปภาพ -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CARD 3: รูปภาพ                              -->
+  <!-- ═══════════════════════════════════════════ -->
   <div class="card">
     <div class="card-title">📸 รูปภาพประกอบ (บังคับ)</div>
     <div class="img-upload" id="imgUploadBox"
@@ -192,7 +335,6 @@
     <div class="img-ok" id="imgOk">✅ แนบรูปเรียบร้อย</div>
   </div>
 
-  <!-- Debug box (เปิดดูตอน test — ตั้ง display:block ชั่วคราวได้) -->
   <div id="debugBox"></div>
 
   <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
@@ -200,7 +342,7 @@
   </button>
 </div>
 
-<!-- Success -->
+<!-- Success Screen -->
 <div id="successScreen" class="card" style="margin:20px 16px;">
   <div class="s-icon">✅</div>
   <h2>ส่งใบแจ้งซ่อมสำเร็จ!</h2>
@@ -221,16 +363,23 @@
   //  CONFIG — แก้ค่าก่อนใช้งาน
   // =============================================
   const LIFF_ID         = "2009394764-9ULxTyIy";
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcFkko7xW1ZXNjdHleErV7Ehn1cnWRRO4xHR1km0NL3bHASGCmnhNn_fBxK1qfYzxAOA/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGLHhwDIwojQSMQr9tYAE9zxuXbNDmBgarIP2XFJPhbu4EX4DPw7yuml6YPW2jGdkMpQ/exec";
 
-  let lineUserId  = "";
-  let imageBase64 = "";
+  // =============================================
+  //  STATE
+  // =============================================
+  let lineUserId     = "";
+  let imageBase64    = "";
+  let machineStop    = null;   // true = หยุด, false = ยังเดิน
+  let selectedJobs   = new Set();  // "เครื่องกล" | "ไฟฟ้า" | "เครน"
+  let empVerified    = false;
 
   // =============================================
   //  INIT
   // =============================================
   window.onload = async () => {
     startClock();
+    loadMachineList();   // โหลด dropdown เครื่องจักรทันที
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -243,12 +392,147 @@
     }
   };
 
-  // นาฬิกา Real-time
   function startClock() {
     const el = document.getElementById("liveClock");
     setInterval(() => {
       el.textContent = new Date().toLocaleTimeString("th-TH");
     }, 1000);
+  }
+
+  // =============================================
+  //  โหลด Dropdown เครื่องจักร (จาก Sheet)
+  // =============================================
+  async function loadMachineList() {
+    const loading = document.getElementById("machineLoading");
+    const sel     = document.getElementById("machineId");
+    loading.style.display = "block";
+    sel.style.display     = "none";
+    try {
+      const res  = await fetch(APPS_SCRIPT_URL + "?action=getMachineList");
+      const data = await res.json();
+      loading.style.display = "none";
+      sel.style.display     = "block";
+      if (data.machines && data.machines.length > 0) {
+        data.machines.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value       = m.id || m.name;
+          opt.textContent = m.name + (m.area ? " — " + m.area : "");
+          opt.dataset.area = m.area || "";
+          sel.appendChild(opt);
+        });
+        debugLog("✅ โหลดเครื่องจักร " + data.machines.length + " รายการ");
+      } else {
+        // fallback — กรอกเองได้
+        loading.style.display = "none";
+        sel.style.display     = "none";
+        const input = document.createElement("input");
+        input.type        = "text";
+        input.id          = "machineIdText";
+        input.placeholder = "เช่น CNC-001, เครื่องกลึง 3";
+        sel.parentNode.insertBefore(input, sel);
+        debugLog("⚠️ ไม่มีข้อมูลเครื่องจักร — ใช้ input แทน");
+      }
+    } catch (e) {
+      loading.style.display = "none";
+      sel.style.display     = "block";
+      debugLog("⚠️ โหลดเครื่องจักรล้มเหลว: " + e.message);
+    }
+  }
+
+  function onMachineChange() {
+    // ถ้าต้องการ auto-fill ข้อมูลเพิ่มเติมจาก option dataset ทำที่นี่
+    const sel = document.getElementById("machineId");
+    const opt = sel.options[sel.selectedIndex];
+    debugLog("เลือกเครื่อง: " + opt.value + " | area: " + (opt.dataset.area || "-"));
+  }
+
+  // =============================================
+  //  ตรวจสอบรหัสพนักงาน
+  // =============================================
+  async function verifyEmployee() {
+    const empId = document.getElementById("empId").value.trim();
+    if (!empId) { showVerifyStatus("กรุณากรอกรหัสพนักงาน", "fail"); return; }
+
+    document.getElementById("btnVerify").disabled = true;
+    showVerifyStatus("⏳ กำลังตรวจสอบ...", "load");
+
+    try {
+      const res  = await fetch(APPS_SCRIPT_URL + "?action=getEmployee&empId=" + encodeURIComponent(empId));
+      const data = await res.json();
+
+      if (data.found) {
+        // ✅ พบข้อมูล — auto-fill
+        document.getElementById("reporterName").value    = data.name     || "";
+        document.getElementById("departmentDisplay").value = data.dept   || "";
+        document.getElementById("department").value        = data.dept   || "";
+        empVerified = true;
+        showVerifyStatus("✅ " + data.name + " — " + data.dept, "ok");
+        debugLog("✅ พบพนักงาน: " + data.name + " | " + data.dept);
+      } else {
+        // ❌ ไม่พบ
+        document.getElementById("reporterName").value      = "";
+        document.getElementById("departmentDisplay").value = "";
+        document.getElementById("department").value        = "";
+        empVerified = false;
+        showVerifyStatus("❌ ไม่พบรหัสพนักงาน " + empId + " กรุณาตรวจสอบอีกครั้ง", "fail");
+        debugLog("❌ ไม่พบรหัสพนักงาน: " + empId);
+      }
+    } catch (e) {
+      showVerifyStatus("⚠️ เชื่อมต่อไม่ได้ — กรุณาลองใหม่", "fail");
+      debugLog("verifyEmployee error: " + e.message);
+    }
+
+    document.getElementById("btnVerify").disabled = false;
+  }
+
+  function showVerifyStatus(msg, type) {
+    const el = document.getElementById("verifyStatus");
+    el.textContent  = msg;
+    el.className    = "verify-status";
+    el.classList.add(
+      type === "ok"   ? "verify-ok"   :
+      type === "fail" ? "verify-fail" : "verify-load"
+    );
+    el.style.display = "block";
+  }
+
+  // =============================================
+  //  เครื่องหยุดเดิน
+  // =============================================
+  function selectStop(isStop) {
+    machineStop = isStop;
+    const btnStop   = document.getElementById("btn-stop");
+    const btnNostop = document.getElementById("btn-nostop");
+    btnStop.classList.remove("sel-stop");
+    btnNostop.classList.remove("sel-nostop");
+    if (isStop) {
+      btnStop.classList.add("sel-stop");
+    } else {
+      btnNostop.classList.add("sel-nostop");
+    }
+    document.getElementById("err-machineStop").style.display = "none";
+  }
+
+  // =============================================
+  //  ประเภทงาน (multi-select)
+  // =============================================
+  const jobTypeMap = {
+    "เครื่องกล": "jt-mech",
+    "ไฟฟ้า":     "jt-elec",
+    "เครน":      "jt-crane",
+  };
+
+  function toggleJobType(type) {
+    if (selectedJobs.has(type)) {
+      selectedJobs.delete(type);
+      document.getElementById(jobTypeMap[type]).classList.remove("selected");
+    } else {
+      selectedJobs.add(type);
+      document.getElementById(jobTypeMap[type]).classList.add("selected");
+    }
+    if (selectedJobs.size > 0) {
+      document.getElementById("err-jobType").style.display = "none";
+    }
   }
 
   // =============================================
@@ -266,7 +550,7 @@
         preview.style.display = "block";
         document.getElementById("imgOk").style.display = "block";
         document.getElementById("imgUploadBox").style.borderColor = "#27AE60";
-        debugLog("📷 รูปพร้อม | ขนาด: " + Math.round(compressed.length / 1024) + " KB");
+        debugLog("📷 รูปพร้อม | " + Math.round(compressed.length / 1024) + " KB");
       });
     };
     reader.readAsDataURL(file);
@@ -286,29 +570,98 @@
   }
 
   // =============================================
-  //  SUBMIT  ✅ แก้จุด no-cors → FormData
+  //  VALIDATE
   // =============================================
-  async function submitForm() {
-    // Validate
-    const fields = {
-      reporterName: "ชื่อ-นามสกุล",
-      department:   "แผนก",
-      machineId:    "รหัส/ชื่อเครื่องจักร",
-      symptom:      "อาการ/ปัญหา",
-    };
-    for (const [id, label] of Object.entries(fields)) {
-      if (!document.getElementById(id).value.trim()) {
-        alert(`กรุณากรอก: ${label}`);
-        document.getElementById(id).focus();
-        return;
-      }
-    }
-    if (!imageBase64) {
-      alert("กรุณาแนบรูปภาพเครื่องจักร");
-      return;
+  function validate() {
+    let ok = true;
+
+    // รหัสพนักงาน
+    const empId = document.getElementById("empId").value.trim();
+    if (!empId || !empVerified) {
+      setErr("field-empId", true);
+      ok = false;
+    } else {
+      setErr("field-empId", false);
     }
 
-    // บันทึก T1 ณ เวลากด Submit จริง
+    // ชื่อ
+    if (!document.getElementById("reporterName").value.trim()) {
+      setErr("field-reporterName", true);
+      ok = false;
+    } else {
+      setErr("field-reporterName", false);
+    }
+
+    // ฝ่าย
+    if (!document.getElementById("department").value.trim()) {
+      setErr("field-department", true);
+      ok = false;
+    } else {
+      setErr("field-department", false);
+    }
+
+    // เครื่องจักร
+    const machineVal = getMachineValue();
+    if (!machineVal) {
+      setErr("field-machineId", true);
+      ok = false;
+    } else {
+      setErr("field-machineId", false);
+    }
+
+    // รายละเอียด
+    if (!document.getElementById("symptom").value.trim()) {
+      setErr("field-symptom", true);
+      ok = false;
+    } else {
+      setErr("field-symptom", false);
+    }
+
+    // เครื่องหยุด
+    if (machineStop === null) {
+      document.getElementById("err-machineStop").style.display = "block";
+      ok = false;
+    } else {
+      document.getElementById("err-machineStop").style.display = "none";
+    }
+
+    // ประเภทงาน
+    if (selectedJobs.size === 0) {
+      document.getElementById("err-jobType").style.display = "block";
+      ok = false;
+    } else {
+      document.getElementById("err-jobType").style.display = "none";
+    }
+
+    // รูปภาพ
+    if (!imageBase64) {
+      alert("กรุณาแนบรูปภาพเครื่องจักร");
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  function setErr(fieldId, hasErr) {
+    const el = document.getElementById(fieldId);
+    if (hasErr) el.classList.add("field-error");
+    else        el.classList.remove("field-error");
+  }
+
+  function getMachineValue() {
+    const sel   = document.getElementById("machineId");
+    const input = document.getElementById("machineIdText");
+    if (sel   && sel.style.display   !== "none") return sel.value;
+    if (input && input.style.display !== "none") return input.value.trim();
+    return "";
+  }
+
+  // =============================================
+  //  SUBMIT
+  // =============================================
+  async function submitForm() {
+    if (!validate()) return;
+
     const t1    = new Date();
     const t1Str = formatThDate(t1);
 
@@ -319,51 +672,39 @@
       type:         "repair_request",
       lineUserId,
       t1:           t1Str,
+      empId:        document.getElementById("empId").value.trim(),
       reporterName: document.getElementById("reporterName").value.trim(),
-      department:   document.getElementById("department").value,
-      machineId:    document.getElementById("machineId").value.trim(),
+      department:   document.getElementById("department").value.trim(),
+      machineId:    getMachineValue(),
       symptom:      document.getElementById("symptom").value.trim(),
+      machineStop:  machineStop,          // true / false
+      jobTypes:     Array.from(selectedJobs).join(", "),  // เช่น "เครื่องกล, ไฟฟ้า"
       imageBase64,
     };
 
-    debugLog("📤 กำลังส่ง payload type: " + payload.type);
+    debugLog("📤 ส่ง payload | machine: " + payload.machineId + " | stop: " + payload.machineStop + " | job: " + payload.jobTypes);
 
-    // ✅ ใช้ FormData แทน JSON + no-cors
-    //    Apps Script รับได้จาก e.parameter.payload
     const formData = new FormData();
     formData.append("payload", JSON.stringify(payload));
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method:  "POST",
-        body:    formData,
-        // ไม่ใส่ mode:"no-cors" → browser จะส่ง body ได้จริง
-        // Apps Script ต้องการ redirect → ใช้ redirect:"follow"
+      await fetch(APPS_SCRIPT_URL, {
+        method:   "POST",
+        body:     formData,
         redirect: "follow",
       });
-
-      debugLog("✅ fetch สำเร็จ | status: " + res.status);
-      hideLoading();
-
-      // สร้าง ticketId จำลองแสดงหน้าจอ (ของจริงอยู่ใน Sheet)
-      const ticketId = generateLocalTicketId();
-      showSuccess(ticketId, t1Str);
-
+      debugLog("✅ fetch สำเร็จ");
     } catch (err) {
-      // Apps Script redirect อาจทำให้ fetch throw CORS error บน browser
-      // แต่ข้อมูลถูกส่งไปแล้ว — แสดง success ได้เลย
-      debugLog("⚠️ fetch error (อาจเป็น CORS redirect ปกติ): " + err.message);
-      hideLoading();
-      const ticketId = generateLocalTicketId();
-      showSuccess(ticketId, t1Str);
+      debugLog("⚠️ fetch note (CORS redirect ปกติ): " + err.message);
     }
+
+    hideLoading();
+    showSuccess(generateLocalTicketId(), t1Str);
   }
 
   // =============================================
   //  Helpers
   // =============================================
-
-  // ✅ format วันที่แบบ dd/MM/yyyy HH:mm:ss ตรงกับ Apps Script
   function formatThDate(date) {
     const pad = n => String(n).padStart(2, "0");
     return `${pad(date.getDate())}/${pad(date.getMonth()+1)}/${date.getFullYear()} ` +
@@ -374,13 +715,7 @@
     const now  = new Date();
     const pad  = n => String(n).padStart(2, "0");
     const date = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
-    return `REP-${date}-???`;   // เลขลำดับจริงอยู่ใน Apps Script
-  }
-
-  function debugLog(msg) {
-    const box = document.getElementById("debugBox");
-    box.innerHTML += msg + "<br>";
-    console.log("[RepairApp] " + msg);
+    return `REP-${date}-???`;
   }
 
   function showSuccess(ticketId, t1Str) {
@@ -393,9 +728,25 @@
   function resetForm() {
     document.getElementById("formScreen").style.display    = "block";
     document.getElementById("successScreen").style.display = "none";
-    ["reporterName","machineId","symptom"].forEach(id =>
-      document.getElementById(id).value = "");
-    document.getElementById("department").value = "";
+
+    document.getElementById("empId").value           = "";
+    document.getElementById("reporterName").value    = "";
+    document.getElementById("departmentDisplay").value = "";
+    document.getElementById("department").value      = "";
+    document.getElementById("symptom").value         = "";
+    document.getElementById("machineId").value       = "";
+    document.getElementById("verifyStatus").style.display = "none";
+
+    machineStop  = null;
+    selectedJobs = new Set();
+    empVerified  = false;
+
+    document.getElementById("btn-stop").classList.remove("sel-stop");
+    document.getElementById("btn-nostop").classList.remove("sel-nostop");
+    Object.values(jobTypeMap).forEach(id =>
+      document.getElementById(id).classList.remove("selected")
+    );
+
     document.getElementById("previewImg").style.display = "none";
     document.getElementById("imgOk").style.display      = "none";
     document.getElementById("imgUploadBox").style.borderColor = "#E0E0E0";
@@ -410,6 +761,12 @@
   }
   function hideLoading() {
     document.getElementById("loadingOverlay").classList.remove("show");
+  }
+
+  function debugLog(msg) {
+    const box = document.getElementById("debugBox");
+    box.innerHTML += msg + "<br>";
+    console.log("[RepairApp] " + msg);
   }
 </script>
 </body>
