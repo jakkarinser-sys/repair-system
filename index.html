@@ -320,14 +320,16 @@
     try {
       await fetch(APPS_SCRIPT_URL, {
         method:  "POST",
+        mode:    "no-cors",
         body:    JSON.stringify(payload),
       });
       hideLoading();
-      showSuccess("REP-" + Date.now(), t1Str);
+      const ticketId = "REP-" + new Date().toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,"") + "-001";
+      showSuccess(ticketId, t1Str);
     } catch (err) {
-      // Apps Script อาจ redirect แต่ข้อมูลถูกบันทึกแล้ว
       hideLoading();
-      showSuccess("REP-" + Date.now(), t1Str);
+      const ticketId = "REP-" + Date.now();
+      showSuccess(ticketId, t1Str);
     }
   }
 
