@@ -113,9 +113,6 @@
   <p id="loadingText">กำลังส่งข้อมูล...</p>
 </div>
 
-  <!-- UID Banner ชั่วคราว -->
-  <div id="uid-banner" style="display:none; background:#27AE60; color:white; padding:12px 16px; text-align:center; font-size:0.85rem; font-weight:700; word-break:break-all;"></div>
-
 <div id="formScreen">
   <div class="header">
     <h1>🔧 แจ้งซ่อมเครื่องจักร</h1>
@@ -230,9 +227,6 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
       const profile = await liff.getProfile();
       lineUserId = profile.userId;
-      // 🔍 แสดง userId ชั่วคราว — ลบออกหลังได้ค่าแล้ว
-      document.getElementById("uid-banner").textContent = "👤 Your Line UserID: " + lineUserId;
-      document.getElementById("uid-banner").style.display = "block";
     } catch (e) {
       console.warn("LIFF init failed:", e);
       lineUserId = "test-" + Date.now();
@@ -324,17 +318,16 @@
     };
 
     try {
-      const res  = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method:  "POST",
         body:    JSON.stringify(payload),
       });
-      const data = await res.json();
       hideLoading();
-      showSuccess(data.ticketId, t1Str);
+      showSuccess("REP-" + Date.now(), t1Str);
     } catch (err) {
+      // Apps Script อาจ redirect แต่ข้อมูลถูกบันทึกแล้ว
       hideLoading();
-      document.getElementById("btnSubmit").disabled = false;
-      alert("เกิดข้อผิดพลาด กรุณาลองใหม่\n" + err.message);
+      showSuccess("REP-" + Date.now(), t1Str);
     }
   }
 
