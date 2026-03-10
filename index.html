@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>แจ้งซ่อม</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #F0F4F8; min-height: 100vh; padding-bottom: 40px; }
+
+    .header {
+      background: linear-gradient(135deg, #E74C3C, #C0392B);
+      color: white; padding: 20px 16px 16px; text-align: center;
+    }
+    .header h1 { font-size: 1.3rem; font-weight: 700; }
+    .header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+
+    /* Timestamp Banner — แสดงเวลาที่นับ */
+    .time-banner {
+      background: #1A252F; color: white;
+      padding: 12px 16px; text-align: center;
+      font-size: 0.8rem; line-height: 1.6;
+    }
+    .time-banner .time { font-size: 1.1rem; font-weight: 700; color: #F39C12; }
+    .time-banner .note { color: #95a5a6; font-size: 0.72rem; }
+
+    .card {
+      background: white; border-radius: 16px;
+      margin: 16px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card-title {
+      font-size: 0.8rem; font-weight: 700; color: #E74C3C;
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #2C3E50; margin-bottom: 6px; }
+    .required::after { content: " *"; color: #E74C3C; }
+
+    input, select, textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #E0E0E0; border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit; color: #2C3E50;
+      background: #FAFAFA; transition: border .2s; -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: #E74C3C; background: #fff;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+
+    .img-upload {
+      border: 2px dashed #E0E0E0; border-radius: 12px;
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: all .2s; background: #FAFAFA;
+    }
+    .img-upload:active { background: #FFF0EE; border-color: #E74C3C; }
+    .img-upload .icon { font-size: 2.5rem; margin-bottom: 6px; }
+    .img-upload p { font-size: 0.82rem; color: #888; }
+    #imageInput { display: none; }
+    #previewImg { width: 100%; border-radius: 10px; margin-top: 12px; display: none; }
+    .img-ok { font-size: 0.75rem; color: #27AE60; margin-top: 6px; font-weight: 600; display: none; }
+
+    .btn-submit {
+      width: calc(100% - 32px); margin: 4px 16px 0;
+      padding: 16px; background: linear-gradient(135deg, #E74C3C, #C0392B);
+      color: white; border: none; border-radius: 14px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(231,76,60,0.35); transition: opacity .2s;
+    }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #successScreen {
+      display: none; text-align: center; padding: 40px 20px;
+    }
+    #successScreen .s-icon { font-size: 4rem; margin-bottom: 16px; }
+    #successScreen h2 { font-size: 1.3rem; color: #27AE60; margin-bottom: 8px; }
+    .ticket-box {
+      background: #F0FFF4; border: 1.5px solid #27AE60;
+      border-radius: 12px; padding: 14px; margin: 16px 0;
+      font-size: 1.1rem; font-weight: 700; color: #27AE60;
+    }
+    #successScreen p { font-size: 0.85rem; color: #666; line-height: 1.6; }
+
+    /* KPI Info Box */
+    .kpi-box {
+      background: #FFF8E1; border-left: 3px solid #F39C12;
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 0.75rem; color: #7D6608; line-height: 1.6; margin-top: 8px;
+    }
+
+    #loadingOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+    }
+    #loadingOverlay.show { display: flex; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingOverlay p { color: white; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingText">กำลังส่งข้อมูล...</p>
+</div>
+
+<div id="formScreen">
+  <div class="header">
+    <h1>🔧 แจ้งซ่อมเครื่องจักร</h1>
+    <p>กรอกข้อมูลให้ครบถ้วน แล้วกด "ส่งใบแจ้งซ่อม"</p>
+  </div>
+
+  <!-- Banner แสดงเวลา T1 แบบ Real-time -->
+  <div class="time-banner">
+    <div>⏱️ เวลาแจ้งซ่อม (T1) จะถูกบันทึกเมื่อกด Submit</div>
+    <div class="time" id="liveClock">--:--:--</div>
+    <div class="note">เวลานี้คือจุดเริ่มต้นความรับผิดชอบของวิศวกรรม</div>
+  </div>
+
+  <!-- ผู้แจ้งซ่อม -->
+  <div class="card">
+    <div class="card-title">📋 ข้อมูลผู้แจ้งซ่อม</div>
+
+    <div class="field">
+      <label class="required" for="reporterName">ชื่อ-นามสกุล</label>
+      <input type="text" id="reporterName" placeholder="เช่น สมชาย ใจดี">
+    </div>
+
+    <div class="field">
+      <label class="required" for="department">แผนก</label>
+      <select id="department">
+        <option value="">— เลือกแผนก —</option>
+        <option>ผลิต A</option>
+        <option>ผลิต B</option>
+        <option>คลังสินค้า</option>
+        <option>บรรจุภัณฑ์</option>
+        <option>ยูทิลิตี้</option>
+        <!-- แก้ให้ตรงกับโรงงานจริง -->
+      </select>
+    </div>
+  </div>
+
+  <!-- เครื่องจักร -->
+  <div class="card">
+    <div class="card-title">🏭 ข้อมูลเครื่องจักร</div>
+
+    <div class="field">
+      <label class="required" for="machineId">รหัส / ชื่อเครื่องจักร</label>
+      <input type="text" id="machineId"
+             placeholder="เช่น CNC-001, เครื่องกลึง 3, ปั๊มน้ำตึก B">
+    </div>
+
+    <div class="field">
+      <label class="required" for="symptom">อาการ / ปัญหาที่พบ</label>
+      <textarea id="symptom"
+        placeholder="อธิบายให้ละเอียดที่สุด เช่น&#10;- เสียงดังผิดปกติที่แกนหมุน&#10;- เครื่องหยุดกะทันหัน ไฟ Error ขึ้น E-03&#10;- น้ำมันรั่วใต้เครื่อง"></textarea>
+    </div>
+
+    <div class="kpi-box">
+      ⏰ <strong>หมายเหตุ:</strong> เวลาที่ใช้วัดประสิทธิภาพวิศวกรรม (MTTR / Downtime)
+      จะเริ่มนับตั้งแต่กด Submit — หากทราบว่าเครื่องเสียมาก่อนหน้านี้
+      ช่วงเวลาก่อนแจ้งถือเป็นความรับผิดชอบของฝ่ายผลิต
+    </div>
+  </div>
+
+  <!-- รูปภาพ -->
+  <div class="card">
+    <div class="card-title">📸 รูปภาพประกอบ (บังคับ)</div>
+    <div class="img-upload" id="imgUploadBox"
+         onclick="document.getElementById('imageInput').click()">
+      <div class="icon">📷</div>
+      <p>กดเพื่อถ่ายรูปหรือเลือกจากคลัง</p>
+    </div>
+    <input type="file" id="imageInput" accept="image/*" capture="environment">
+    <img id="previewImg" alt="ตัวอย่างรูป">
+    <div class="img-ok" id="imgOk">✅ แนบรูปเรียบร้อย</div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
+    📤 ส่งใบแจ้งซ่อม
+  </button>
+</div>
+
+<!-- Success -->
+<div id="successScreen" class="card" style="margin:20px 16px;">
+  <div class="s-icon">✅</div>
+  <h2>ส่งใบแจ้งซ่อมสำเร็จ!</h2>
+  <div class="ticket-box" id="ticketDisplay">REP-XXXXXXXX-XXX</div>
+  <p>
+    ⏱️ เวลาแจ้ง: <strong id="submitTimeDisplay"></strong><br><br>
+    ระบบกำลังแจ้งหัวหน้าเพื่ออนุมัติ<br>
+    คุณจะได้รับการแจ้งเตือนทาง Line เมื่อมีความคืบหน้า
+  </p>
+  <br>
+  <button class="btn-submit" onclick="resetForm()" style="margin:0;width:100%;">
+    ➕ แจ้งซ่อมเพิ่ม
+  </button>
+</div>
+
+<script>
+  // =============================================
+  //  CONFIG — แก้ค่าก่อนใช้งาน
+  // =============================================
+  const LIFF_ID         = "YOUR_LIFF_ID";
+  const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+  let lineUserId  = "";
+  let imageBase64 = "";
+
+  // =============================================
+  //  INIT
+  // =============================================
+  window.onload = async () => {
+    startClock();
+
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      lineUserId = profile.userId;
+    } catch (e) {
+      console.warn("LIFF init failed:", e);
+      lineUserId = "test-" + Date.now();
+    }
+  };
+
+  // นาฬิกา Real-time
+  function startClock() {
+    const el = document.getElementById("liveClock");
+    setInterval(() => {
+      el.textContent = new Date().toLocaleTimeString("th-TH");
+    }, 1000);
+  }
+
+  // =============================================
+  //  รูปภาพ
+  // =============================================
+  document.getElementById("imageInput").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      compressImage(ev.target.result, 800, 0.7, compressed => {
+        imageBase64 = compressed;
+        const preview = document.getElementById("previewImg");
+        preview.src = compressed;
+        preview.style.display = "block";
+        document.getElementById("imgOk").style.display = "block";
+        document.getElementById("imgUploadBox").style.borderColor = "#27AE60";
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function compressImage(base64, maxWidth, quality, cb) {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ratio  = Math.min(maxWidth / img.width, 1);
+      canvas.width  = img.width  * ratio;
+      canvas.height = img.height * ratio;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = base64;
+  }
+
+  // =============================================
+  //  SUBMIT
+  // =============================================
+  async function submitForm() {
+    const fields = {
+      reporterName: "ชื่อ-นามสกุล",
+      department:   "แผนก",
+      machineId:    "รหัส/ชื่อเครื่องจักร",
+      symptom:      "อาการ/ปัญหา",
+    };
+    for (const [id, label] of Object.entries(fields)) {
+      if (!document.getElementById(id).value.trim()) {
+        alert(`กรุณากรอก: ${label}`);
+        document.getElementById(id).focus();
+        return;
+      }
+    }
+    if (!imageBase64) {
+      alert("กรุณาแนบรูปภาพเครื่องจักร");
+      return;
+    }
+
+    // บันทึก T1 ณ เวลากด Submit จริง
+    const t1 = new Date();
+    const t1Str = t1.toLocaleString("th-TH", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+
+    showLoading("กำลังส่งข้อมูล...");
+    document.getElementById("btnSubmit").disabled = true;
+
+    const payload = {
+      type:         "repair_request",
+      lineUserId,
+      t1:           t1Str,           // ✅ T1 = เวลากด Submit เท่านั้น ไม่มี T0
+      reporterName: document.getElementById("reporterName").value.trim(),
+      department:   document.getElementById("department").value,
+      machineId:    document.getElementById("machineId").value.trim(),
+      symptom:      document.getElementById("symptom").value.trim(),
+      imageBase64,
+    };
+
+    try {
+      const res  = await fetch(APPS_SCRIPT_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+      hideLoading();
+      showSuccess(data.ticketId, t1Str);
+    } catch (err) {
+      hideLoading();
+      document.getElementById("btnSubmit").disabled = false;
+      alert("เกิดข้อผิดพลาด กรุณาลองใหม่\n" + err.message);
+    }
+  }
+
+  // =============================================
+  //  UI Helpers
+  // =============================================
+  function showSuccess(ticketId, t1Str) {
+    document.getElementById("formScreen").style.display    = "none";
+    document.getElementById("successScreen").style.display = "block";
+    document.getElementById("ticketDisplay").textContent   = ticketId;
+    document.getElementById("submitTimeDisplay").textContent = t1Str;
+  }
+
+  function resetForm() {
+    document.getElementById("formScreen").style.display    = "block";
+    document.getElementById("successScreen").style.display = "none";
+    ["reporterName","machineId","symptom"].forEach(id =>
+      document.getElementById(id).value = "");
+    document.getElementById("department").value = "";
+    document.getElementById("previewImg").style.display = "none";
+    document.getElementById("imgOk").style.display = "none";
+    document.getElementById("imgUploadBox").style.borderColor = "#E0E0E0";
+    document.getElementById("btnSubmit").disabled = false;
+    imageBase64 = "";
+  }
+
+  function showLoading(text) {
+    document.getElementById("loadingText").textContent = text;
+    document.getElementById("loadingOverlay").classList.add("show");
+  }
+  function hideLoading() {
+    document.getElementById("loadingOverlay").classList.remove("show");
+  }
+</script>
+</body>
+</html>

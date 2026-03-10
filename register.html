@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>ลงทะเบียนช่าง</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #F0F4F8;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 24px;
+    }
+
+    /* Loading */
+    #loadingScreen { text-align: center; }
+    .spinner {
+      width: 48px; height: 48px; margin: 0 auto 16px;
+      border: 4px solid #E0E0E0;
+      border-top-color: #2C3E50;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingScreen p { color: #888; font-size: 0.9rem; }
+
+    /* Card */
+    .card {
+      background: white; border-radius: 20px;
+      padding: 28px 24px; width: 100%; max-width: 360px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: none; text-align: center;
+    }
+
+    /* Profile */
+    #profileCard .avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover; margin: 0 auto 12px;
+      border: 3px solid #2C3E50;
+      display: block;
+    }
+    #profileCard .avatar-placeholder {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: #2C3E50; margin: 0 auto 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: white;
+    }
+    #profileCard .line-name {
+      font-size: 1.1rem; font-weight: 700; color: #2C3E50; margin-bottom: 4px;
+    }
+    #profileCard .line-sub {
+      font-size: 0.75rem; color: #888; margin-bottom: 20px;
+    }
+
+    /* Form */
+    .field { margin-bottom: 14px; text-align: left; }
+    label { display: block; font-size: 0.78rem; font-weight: 700; color: #555; margin-bottom: 5px; }
+    .required::after { content: " *"; color: #E74C3C; }
+    input, select {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #E0E0E0; border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit; color: #2C3E50;
+      background: #FAFAFA; -webkit-appearance: none; transition: border .2s;
+    }
+    input:focus, select:focus {
+      outline: none; border-color: #2C3E50; background: #fff;
+    }
+
+    /* Role Selector */
+    .role-group { display: flex; gap: 8px; }
+    .role-btn {
+      flex: 1; padding: 10px 6px; border: 2px solid #E0E0E0;
+      border-radius: 10px; background: #FAFAFA; cursor: pointer;
+      text-align: center; transition: all .2s; font-family: inherit;
+    }
+    .role-btn .r-icon { font-size: 1.4rem; display: block; margin-bottom: 3px; }
+    .role-btn .r-label { font-size: 0.72rem; font-weight: 700; color: #888; }
+    .role-btn.selected { border-color: #2C3E50; background: #EBF5FB; }
+    .role-btn.selected .r-label { color: #2C3E50; }
+
+    .divider {
+      border: none; border-top: 1px solid #F0F0F0;
+      margin: 18px 0;
+    }
+
+    /* Submit Button */
+    .btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #1A252F, #2C3E50);
+      color: white; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      margin-top: 6px; transition: opacity .2s;
+      box-shadow: 0 4px 12px rgba(44,62,80,0.3);
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Already Registered */
+    #alreadyCard .big-icon { font-size: 3.5rem; margin-bottom: 12px; }
+    #alreadyCard h2 { font-size: 1.1rem; color: #2C3E50; margin-bottom: 8px; }
+    #alreadyCard .info-box {
+      background: #EBF5FB; border-radius: 12px;
+      padding: 14px; margin: 14px 0; text-align: left;
+    }
+    #alreadyCard .info-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; padding: 4px 0;
+      border-bottom: 1px dashed #D0E8F8;
+    }
+    #alreadyCard .info-row:last-child { border: none; }
+    #alreadyCard .info-label { color: #888; }
+    #alreadyCard .info-val   { font-weight: 700; color: #2C3E50; }
+    .btn-outline {
+      width: 100%; padding: 12px;
+      background: white; color: #2C3E50;
+      border: 2px solid #2C3E50; border-radius: 12px;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+
+    /* Success */
+    #successCard .big-icon { font-size: 4rem; margin-bottom: 12px; }
+    #successCard h2 { font-size: 1.2rem; color: #27AE60; margin-bottom: 8px; }
+    #successCard .success-box {
+      background: #F0FFF4; border: 1.5px solid #27AE60;
+      border-radius: 12px; padding: 16px; margin: 14px 0;
+    }
+    #successCard .s-name {
+      font-size: 1rem; font-weight: 700; color: #2C3E50; margin-bottom: 4px;
+    }
+    #successCard .s-role {
+      font-size: 0.78rem; color: #27AE60; font-weight: 600;
+    }
+    #successCard p {
+      font-size: 0.78rem; color: #888; line-height: 1.7; margin-top: 10px;
+    }
+
+    /* Error */
+    #errorCard .big-icon { font-size: 3rem; margin-bottom: 12px; }
+    #errorCard h2 { font-size: 1rem; color: #E74C3C; margin-bottom: 8px; }
+    #errorCard p  { font-size: 0.78rem; color: #888; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<!-- 1. Loading -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p>กำลังโหลด...</p>
+</div>
+
+<!-- 2. ฟอร์มลงทะเบียน -->
+<div class="card" id="profileCard">
+
+  <!-- รูปและชื่อ Line -->
+  <img id="avatarImg" class="avatar" src="" alt=""
+       onerror="this.style.display='none'; document.getElementById('avatarFallback').style.display='flex'">
+  <div class="avatar-placeholder" id="avatarFallback" style="display:none;">👷</div>
+  <div class="line-name" id="lineDisplayName">—</div>
+  <div class="line-sub">บัญชี Line ที่ใช้งาน</div>
+
+  <hr class="divider">
+
+  <!-- ชื่อจริง -->
+  <div class="field">
+    <label class="required" for="realName">ชื่อ-นามสกุล (จริง)</label>
+    <input type="text" id="realName" placeholder="เช่น ทองพิศ มีสุข">
+  </div>
+
+  <!-- แผนก / ทีม -->
+  <div class="field">
+    <label class="required" for="teamDept">ทีม / แผนก</label>
+    <select id="teamDept">
+      <option value="">— เลือกทีม —</option>
+      <option>ทีม A (กะเช้า)</option>
+      <option>ทีม B (กะบ่าย)</option>
+      <option>ทีม C (กะดึก)</option>
+      <option>ทีมวิศวกรรมทั่วไป</option>
+      <option>ทีมไฟฟ้า</option>
+      <option>ทีมเครื่องกล</option>
+      <!-- แก้ให้ตรงกับโรงงานจริง -->
+    </select>
+  </div>
+
+  <!-- เบอร์โทร -->
+  <div class="field">
+    <label for="phone">เบอร์โทร (ไว้ติดต่อฉุกเฉิน)</label>
+    <input type="tel" id="phone" placeholder="08x-xxx-xxxx">
+  </div>
+
+  <!-- Role -->
+  <div class="field">
+    <label class="required">บทบาทในระบบ</label>
+    <div class="role-group">
+      <button class="role-btn" id="roletech" onclick="selectRole('ช่าง')">
+        <span class="r-icon">🔧</span>
+        <span class="r-label">ช่าง</span>
+      </button>
+      <button class="role-btn" id="rolechief" onclick="selectRole('หัวหน้าช่าง')">
+        <span class="r-icon">👔</span>
+        <span class="r-label">หัวหน้าช่าง</span>
+      </button>
+      <button class="role-btn" id="roleviewer" onclick="selectRole('ดูข้อมูล')">
+        <span class="r-icon">📊</span>
+        <span class="r-label">ดูข้อมูล</span>
+      </button>
+    </div>
+  </div>
+
+  <button class="btn" id="btnRegister" onclick="submitRegister()">
+    ✅ ลงทะเบียนเข้าระบบ
+  </button>
+</div>
+
+<!-- 3. เคยลงทะเบียนแล้ว -->
+<div class="card" id="alreadyCard">
+  <div class="big-icon">👋</div>
+  <h2>คุณลงทะเบียนแล้ว!</h2>
+  <div class="info-box" id="existingInfo"></div>
+  <p>หากข้อมูลไม่ถูกต้อง กดอัปเดตได้เลย</p>
+  <button class="btn-outline" onclick="showUpdateForm()">
+    ✏️ อัปเดตข้อมูล
+  </button>
+</div>
+
+<!-- 4. สำเร็จ -->
+<div class="card" id="successCard">
+  <div class="big-icon">🎉</div>
+  <h2>ลงทะเบียนสำเร็จ!</h2>
+  <div class="success-box">
+    <div class="s-name" id="successName">—</div>
+    <div class="s-role" id="successRole">—</div>
+  </div>
+  <p>
+    ระบบบันทึก Line ID ของคุณแล้ว<br>
+    เมื่อหัวหน้าช่างมอบหมายงาน<br>
+    <strong>คุณจะได้รับแจ้งทาง Line อัตโนมัติ</strong>
+  </p>
+</div>
+
+<!-- 5. Error -->
+<div class="card" id="errorCard">
+  <div class="big-icon">⚠️</div>
+  <h2>เกิดข้อผิดพลาด</h2>
+  <p id="errorMsg">กรุณาปิดแล้วเปิดใหม่อีกครั้ง</p>
+  <button class="btn" style="margin-top:16px;" onclick="location.reload()">
+    🔄 ลองใหม่
+  </button>
+</div>
+
+<script>
+  // =============================================
+  //  CONFIG
+  // =============================================
+  const LIFF_ID         = "YOUR_LIFF_ID_REGISTER";   // สร้าง LIFF ID ใหม่สำหรับหน้านี้
+  const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+  let lineUserId      = "";
+  let lineDisplayName = "";
+  let linePictureUrl  = "";
+  let selectedRole    = "";
+
+  // =============================================
+  //  INIT
+  // =============================================
+  window.onload = async () => {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const profile   = await liff.getProfile();
+      lineUserId      = profile.userId;
+      lineDisplayName = profile.displayName;
+      linePictureUrl  = profile.pictureUrl || "";
+
+      // ตรวจสอบว่าเคยลงทะเบียนแล้วหรือยัง
+      const existing = await checkExisting(lineUserId);
+
+      hide("loadingScreen");
+
+      if (existing) {
+        showExisting(existing);
+      } else {
+        showRegisterForm();
+      }
+
+    } catch(e) {
+      hide("loadingScreen");
+      document.getElementById("errorMsg").textContent = e.message;
+      show("errorCard");
+    }
+  };
+
+  // =============================================
+  //  ตรวจสอบ userId ซ้ำ
+  // =============================================
+  async function checkExisting(userId) {
+    try {
+      const res  = await fetch(
+        `${APPS_SCRIPT_URL}?action=checkTech&userId=${userId}`
+      );
+      const data = await res.json();
+      return data.found ? data : null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  // =============================================
+  //  แสดงฟอร์มลงทะเบียน
+  // =============================================
+  function showRegisterForm() {
+    // ใส่รูปและชื่อ Line
+    if (linePictureUrl) {
+      document.getElementById("avatarImg").src = linePictureUrl;
+    } else {
+      document.getElementById("avatarFallback").style.display = "flex";
+    }
+    document.getElementById("lineDisplayName").textContent = lineDisplayName;
+    show("profileCard");
+  }
+
+  // =============================================
+  //  แสดงข้อมูลที่เคยลงทะเบียน
+  // =============================================
+  function showExisting(data) {
+    const box = document.getElementById("existingInfo");
+    box.innerHTML = `
+      <div class="info-row">
+        <span class="info-label">ชื่อจริง</span>
+        <span class="info-val">${data.realName}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">ทีม</span>
+        <span class="info-val">${data.team}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">บทบาท</span>
+        <span class="info-val">${data.role}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">ลงทะเบียน</span>
+        <span class="info-val">${data.registeredAt}</span>
+      </div>`;
+    show("alreadyCard");
+  }
+
+  // =============================================
+  //  กดอัปเดตข้อมูล
+  // =============================================
+  function showUpdateForm() {
+    hide("alreadyCard");
+    showRegisterForm();
+  }
+
+  // =============================================
+  //  เลือก Role
+  // =============================================
+  function selectRole(role) {
+    selectedRole = role;
+    ["ช่าง","หัวหน้าช่าง","ดูข้อมูล"].forEach(r => {
+      const id = "role" + r.replace("หัวหน้าช่าง","chief").replace("ช่าง","tech").replace("ดูข้อมูล","viewer");
+      document.getElementById(id).classList.remove("selected");
+    });
+    const map = { "ช่าง":"roletech", "หัวหน้าช่าง":"rolechief", "ดูข้อมูล":"roleviewer" };
+    document.getElementById(map[role]).classList.add("selected");
+  }
+
+  // =============================================
+  //  Submit ลงทะเบียน
+  // =============================================
+  async function submitRegister() {
+    const realName = document.getElementById("realName").value.trim();
+    const team     = document.getElementById("teamDept").value;
+    const phone    = document.getElementById("phone").value.trim();
+
+    if (!realName)    { alert("กรุณากรอกชื่อ-นามสกุล"); return; }
+    if (!team)        { alert("กรุณาเลือกทีม/แผนก"); return; }
+    if (!selectedRole){ alert("กรุณาเลือกบทบาท"); return; }
+
+    document.getElementById("btnRegister").disabled = true;
+    document.getElementById("btnRegister").textContent = "⏳ กำลังบันทึก...";
+
+    const payload = {
+      type:        "register_tech",
+      userId:      lineUserId,
+      displayName: lineDisplayName,
+      pictureUrl:  linePictureUrl,
+      realName,
+      team,
+      phone,
+      role:        selectedRole,
+      registeredAt: new Date().toLocaleString("th-TH"),
+    };
+
+    try {
+      const res  = await fetch(APPS_SCRIPT_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      hide("profileCard");
+      document.getElementById("successName").textContent = `${selectedRole === "หัวหน้าช่าง" ? "👔" : "🔧"} ${realName}`;
+      document.getElementById("successRole").textContent = `${selectedRole} — ${team}`;
+      show("successCard");
+
+    } catch(e) {
+      document.getElementById("btnRegister").disabled  = false;
+      document.getElementById("btnRegister").textContent = "✅ ลงทะเบียนเข้าระบบ";
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
+  }
+
+  // =============================================
+  //  UI Helpers
+  // =============================================
+  function show(id) { document.getElementById(id).style.display = "block"; }
+  function hide(id) { document.getElementById(id).style.display = "none";  }
+</script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>บันทึกผลการซ่อม</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #F0F4F8; min-height: 100vh; padding-bottom: 40px; }
+
+    .header {
+      background: linear-gradient(135deg, #1A252F, #2C3E50);
+      color: white; padding: 20px 16px 16px; text-align: center;
+    }
+    .header h1 { font-size: 1.3rem; font-weight: 700; }
+    .header p  { font-size: 0.8rem; opacity: 0.8; margin-top: 4px; }
+
+    /* Ticket Info Banner */
+    .ticket-banner {
+      background: #2C3E50; color: white;
+      padding: 14px 16px; margin: 0;
+    }
+    .ticket-banner .tid {
+      font-size: 1rem; font-weight: 700; color: #F39C12;
+    }
+    .ticket-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px; margin-top: 8px;
+    }
+    .tg-item { font-size: 0.72rem; }
+    .tg-label { color: #95a5a6; }
+    .tg-value { color: #ecf0f1; font-weight: 600; }
+    .priority-badge {
+      display: inline-block; padding: 2px 10px;
+      border-radius: 12px; font-size: 0.72rem; font-weight: 700;
+    }
+    .bd   { background: #E74C3C; }
+    .urg  { background: #F39C12; }
+    .norm { background: #27AE60; }
+
+    .card {
+      background: white; border-radius: 16px;
+      margin: 16px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card-title {
+      font-size: 0.8rem; font-weight: 700; color: #2C3E50;
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #2C3E50; margin-bottom: 6px; }
+    .required::after { content: " *"; color: #E74C3C; }
+
+    input, select, textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #E0E0E0; border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit; color: #2C3E50;
+      background: #FAFAFA; transition: border .2s; -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: #2C3E50; background: #fff;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* Radio Group */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border: 1.5px solid #E0E0E0;
+      border-radius: 10px; cursor: pointer; transition: all .2s;
+    }
+    .radio-item:has(input:checked) { border-color: #2C3E50; background: #EBF5FB; }
+    .radio-item input[type="radio"] { width: 18px; height: 18px; flex-shrink: 0; }
+    .radio-item .r-label { font-size: 0.85rem; font-weight: 600; }
+    .radio-item .r-desc  { font-size: 0.72rem; color: #888; margin-top: 2px; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
+    }
+    .toggle-row .t-label { font-size: 0.85rem; font-weight: 600; color: #2C3E50; }
+    .toggle-row .t-desc  { font-size: 0.72rem; color: #888; margin-top: 2px; }
+    .toggle {
+      position: relative; width: 50px; height: 28px; flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; background: #E0E0E0;
+      border-radius: 28px; cursor: pointer; transition: .3s;
+    }
+    .slider::before {
+      content: ""; position: absolute;
+      width: 20px; height: 20px; background: white;
+      border-radius: 50%; left: 4px; top: 4px; transition: .3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider { background: #E74C3C; }
+    input:checked + .slider::before { transform: translateX(22px); }
+
+    /* Outside tech section */
+    #outsideTechSection {
+      display: none; background: #FFF0EE;
+      border: 1.5px solid #E74C3C; border-radius: 12px;
+      padding: 14px; margin-top: 12px;
+    }
+    #outsideTechSection .section-title {
+      font-size: 0.78rem; font-weight: 700; color: #E74C3C; margin-bottom: 10px;
+    }
+
+    /* Image Upload */
+    .img-upload {
+      border: 2px dashed #E0E0E0; border-radius: 12px;
+      padding: 20px; text-align: center; cursor: pointer;
+      transition: all .2s; background: #FAFAFA;
+    }
+    .img-upload .icon { font-size: 2rem; margin-bottom: 6px; }
+    .img-upload p { font-size: 0.78rem; color: #888; }
+    #afterImageInput { display: none; }
+    #afterPreview { width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+    .img-ok { font-size: 0.72rem; color: #27AE60; margin-top: 6px; font-weight: 600; display: none; }
+
+    /* Status Timeline */
+    .timeline { padding: 0; }
+    .tl-item {
+      display: flex; gap: 12px; padding-bottom: 16px;
+      position: relative;
+    }
+    .tl-item:not(:last-child)::before {
+      content: ""; position: absolute;
+      left: 15px; top: 32px; bottom: 0;
+      width: 2px; background: #E0E0E0;
+    }
+    .tl-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0; border: 2px solid;
+    }
+    .tl-dot.done  { background: #D5F5E3; border-color: #27AE60; }
+    .tl-dot.now   { background: #D6EAF8; border-color: #2980B9; }
+    .tl-dot.wait  { background: #F5F5F5; border-color: #BDC3C7; }
+    .tl-content { flex: 1; padding-top: 4px; }
+    .tl-title { font-size: 0.82rem; font-weight: 700; color: #2C3E50; }
+    .tl-time  { font-size: 0.7rem;  color: #888; margin-top: 2px; }
+
+    .btn-submit {
+      width: calc(100% - 32px); margin: 4px 16px 0;
+      padding: 16px; background: linear-gradient(135deg, #1A252F, #2C3E50);
+      color: white; border: none; border-radius: 14px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(44,62,80,0.35); transition: opacity .2s;
+    }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-update {
+      width: calc(100% - 32px); margin: 8px 16px 0;
+      padding: 13px; background: white;
+      color: #2C3E50; border: 2px solid #2C3E50; border-radius: 14px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    }
+
+    /* Success */
+    #successScreen { display: none; text-align: center; padding: 40px 20px; }
+    #successScreen .s-icon { font-size: 4rem; margin-bottom: 12px; }
+    #successScreen h2 { font-size: 1.2rem; color: #27AE60; }
+    .kpi-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin: 16px 0;
+    }
+    .kpi-card {
+      background: #F0FFF4; border: 1.5px solid #27AE60;
+      border-radius: 12px; padding: 12px; text-align: center;
+    }
+    .kpi-val   { font-size: 1.3rem; font-weight: 700; color: #27AE60; }
+    .kpi-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
+
+    /* Loading Screen */
+    #loadingScreen {
+      display: none; text-align: center; padding: 60px 20px;
+    }
+    #loadingScreen .spinner {
+      width: 48px; height: 48px; margin: 0 auto 16px;
+      border: 4px solid #E0E0E0; border-top-color: #2C3E50;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loadingOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+    }
+    #loadingOverlay.show { display: flex; }
+    .ov-spinner {
+      width: 44px; height: 44px;
+      border: 4px solid rgba(255,255,255,.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    #loadingOverlay p { color: white; font-size: 0.9rem; }
+
+    .not-found {
+      display: none; text-align: center; padding: 60px 20px; color: #888;
+    }
+    .not-found .icon { font-size: 3rem; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="ov-spinner"></div>
+  <p id="loadingText">กำลังบันทึก...</p>
+</div>
+
+<!-- Loading Initial -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p style="color:#888; font-size:0.9rem;">กำลังโหลดข้อมูลงาน...</p>
+</div>
+
+<!-- Not Found -->
+<div class="not-found" id="notFound">
+  <div class="icon">🔍</div>
+  <p>ไม่พบข้อมูลงานซ่อม<br>กรุณาตรวจสอบ Ticket ID</p>
+</div>
+
+<!-- Main Form -->
+<div id="mainScreen" style="display:none;">
+
+  <div class="header">
+    <h1>🔧 บันทึกผลการซ่อม</h1>
+    <p>อัปเดตสถานะและสรุปการซ่อม</p>
+  </div>
+
+  <!-- Ticket Info -->
+  <div class="ticket-banner">
+    <div class="tid" id="bannerTicket">REP-XXXXXXXX-XXX</div>
+    <div class="ticket-grid">
+      <div class="tg-item">
+        <div class="tg-label">🏭 เครื่องจักร</div>
+        <div class="tg-value" id="bannerMachine">—</div>
+      </div>
+      <div class="tg-item">
+        <div class="tg-label">⚡ ระดับ</div>
+        <div class="tg-value" id="bannerPriority">—</div>
+      </div>
+      <div class="tg-item">
+        <div class="tg-label">👷 ช่าง</div>
+        <div class="tg-value" id="bannerTech">—</div>
+      </div>
+      <div class="tg-item">
+        <div class="tg-label">⏱️ แจ้งซ่อม</div>
+        <div class="tg-value" id="bannerT1">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card">
+    <div class="card-title">📍 สถานะการซ่อม</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- อาการที่แจ้งมา -->
+  <div class="card">
+    <div class="card-title">📋 อาการที่แจ้งมา</div>
+    <div id="symptomDisplay" style="font-size:0.85rem; color:#2C3E50; line-height:1.6; background:#F8F9FA; padding:12px; border-radius:8px;"></div>
+  </div>
+
+  <!-- ผลการซ่อม -->
+  <div class="card">
+    <div class="card-title">🔧 ผลการซ่อม</div>
+
+    <div class="field">
+      <label class="required">ผลการดำเนินการ</label>
+      <div class="radio-group">
+        <label class="radio-item">
+          <input type="radio" name="repairResult" value="ซ่อมเสร็จ ใช้งานได้ปกติ">
+          <div>
+            <div class="r-label">✅ ซ่อมเสร็จ ใช้งานได้ปกติ</div>
+            <div class="r-desc">เครื่องพร้อมใช้งานแล้ว</div>
+          </div>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="repairResult" value="ซ่อมชั่วคราว รอดำเนินการต่อ">
+          <div>
+            <div class="r-label">⚠️ ซ่อมชั่วคราว รอดำเนินการต่อ</div>
+            <div class="r-desc">เครื่องเดินได้แต่ยังไม่สมบูรณ์</div>
+          </div>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="repairResult" value="รอชิ้นส่วนอะไหล่">
+          <div>
+            <div class="r-label">🔩 รอชิ้นส่วน / อะไหล่</div>
+            <div class="r-desc">ต้องสั่งซื้ออะไหล่ก่อน</div>
+          </div>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="repairResult" value="เรียกช่างนอก">
+          <div>
+            <div class="r-label">🚗 ต้องเรียกช่างภายนอก</div>
+            <div class="r-desc">เกินขีดความสามารถภายใน</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="required" for="repairNote">สรุปการซ่อม (อธิบายสิ่งที่ทำ)</label>
+      <textarea id="repairNote"
+        placeholder="เช่น&#10;- เปลี่ยน Bearing เบอร์ 6205 จำนวน 2 ตัว&#10;- ปรับ Belt ใหม่&#10;- ทดสอบเดินเครื่อง 30 นาที ปกติดี"></textarea>
+    </div>
+
+    <!-- เรียกช่างนอก -->
+    <div class="toggle-row">
+      <div>
+        <div class="t-label">🚗 ต้องเรียกช่างภายนอก</div>
+        <div class="t-desc">ต้องการผู้เชี่ยวชาญจากภายนอก</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="outsideTech" onchange="toggleOutside(this)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="outsideTechSection">
+      <div class="section-title">📝 ข้อมูลช่างภายนอก</div>
+      <div class="field" style="margin-bottom:10px;">
+        <input type="text" id="outsideCompany" placeholder="ชื่อบริษัท / ช่าง">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <input type="text" id="outsideReason" placeholder="เหตุผลที่ต้องเรียกช่างนอก">
+      </div>
+    </div>
+  </div>
+
+  <!-- รูปภาพหลังซ่อม -->
+  <div class="card">
+    <div class="card-title">📸 รูปภาพหลังซ่อม (แนะนำ)</div>
+    <div class="img-upload" id="afterUploadBox"
+         onclick="document.getElementById('afterImageInput').click()">
+      <div class="icon">📷</div>
+      <p>ถ่ายรูปหลังซ่อมเสร็จเพื่อเป็นหลักฐาน</p>
+    </div>
+    <input type="file" id="afterImageInput" accept="image/*" capture="environment">
+    <img id="afterPreview" alt="รูปหลังซ่อม">
+    <div class="img-ok" id="afterImgOk">✅ แนบรูปเรียบร้อย</div>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="submitResult()">
+    ✅ บันทึกผลการซ่อม
+  </button>
+  <button class="btn-update" onclick="updateStatus()">
+    🔄 อัปเดตสถานะระหว่างซ่อม
+  </button>
+
+</div>
+
+<!-- Success Screen -->
+<div id="successScreen" class="card" style="margin:20px 16px;">
+  <div class="s-icon">🎉</div>
+  <h2>บันทึกผลการซ่อมสำเร็จ!</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val" id="mttrDisplay">—</div>
+      <div class="kpi-label">⏱️ เวลาซ่อม (ชม.)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="totalDisplay">—</div>
+      <div class="kpi-label">📊 Downtime วิศวกรรม (ชม.)</div>
+    </div>
+  </div>
+  <p style="font-size:0.82rem; color:#666; line-height:1.7;">
+    ระบบแจ้งผู้แจ้งซ่อมและหัวหน้าแล้ว<br>
+    ข้อมูลบันทึกลง Google Sheet เรียบร้อย
+  </p>
+</div>
+
+<script>
+  // =============================================
+  //  CONFIG
+  // =============================================
+  const LIFF_ID         = "YOUR_LIFF_ID_REPAIR_RESULT"; // LIFF ID สำหรับหน้านี้
+  const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+  let lineUserId   = "";
+  let ticketId     = "";
+  let ticketData   = null;
+  let afterBase64  = "";
+
+  // =============================================
+  //  INIT
+  // =============================================
+  window.onload = async () => {
+    document.getElementById("loadingScreen").style.display = "block";
+
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      lineUserId = profile.userId;
+    } catch(e) {
+      lineUserId = "test-" + Date.now();
+    }
+
+    // รับ ticketId จาก URL parameter
+    // URL ตัวอย่าง: https://liff.line.me/xxx-yyy?ticketId=REP-20250310-001
+    const params = new URLSearchParams(window.location.search);
+    ticketId = params.get("ticketId") || "";
+
+    if (ticketId) {
+      await loadTicketData(ticketId);
+    } else {
+      // ถ้าไม่มี ticketId ใน URL → แสดงช่องกรอก
+      document.getElementById("loadingScreen").style.display = "none";
+      showTicketInput();
+    }
+  };
+
+  // =============================================
+  //  โหลดข้อมูล Ticket จาก Apps Script
+  // =============================================
+  async function loadTicketData(tid) {
+    try {
+      const res  = await fetch(`${APPS_SCRIPT_URL}?action=getTicket&ticketId=${tid}`);
+      const data = await res.json();
+
+      document.getElementById("loadingScreen").style.display = "none";
+
+      if (!data || data.error) {
+        document.getElementById("notFound").style.display = "block";
+        return;
+      }
+
+      ticketData = data;
+      renderTicket(data);
+      document.getElementById("mainScreen").style.display = "block";
+    } catch(e) {
+      document.getElementById("loadingScreen").style.display = "none";
+      document.getElementById("notFound").style.display = "block";
+    }
+  }
+
+  function renderTicket(d) {
+    document.getElementById("bannerTicket").textContent   = d.ticketId;
+    document.getElementById("bannerMachine").textContent  = d.machine;
+    document.getElementById("bannerTech").textContent     = d.techName;
+    document.getElementById("bannerT1").textContent       = d.t1;
+    document.getElementById("symptomDisplay").textContent = d.symptom;
+
+    // Priority badge
+    const pEl = document.getElementById("bannerPriority");
+    const cls  = d.priority === "BREAKDOWN" ? "bd" : d.priority === "เร่งด่วน" ? "urg" : "norm";
+    const emo  = d.priority === "BREAKDOWN" ? "🔴" : d.priority === "เร่งด่วน" ? "🟡" : "🟢";
+    pEl.innerHTML = `<span class="priority-badge ${cls}">${emo} ${d.priority}</span>`;
+
+    renderTimeline(d);
+  }
+
+  function renderTimeline(d) {
+    const steps = [
+      { label:"แจ้งซ่อม",         time: d.t1, done: !!d.t1 },
+      { label:"อนุมัติ",           time: d.t2, done: !!d.t2 },
+      { label:"หัวหน้าช่างประเมิน", time: d.t3, done: !!d.t3 },
+      { label:"ช่างรับงาน",        time: d.t4, done: !!d.t4 },
+      { label:"ซ่อมเสร็จ",         time: d.t5, done: !!d.t5 },
+    ];
+
+    const firstPending = steps.findIndex(s => !s.done);
+    const html = steps.map((s, i) => {
+      const cls = s.done ? "done" : i === firstPending ? "now" : "wait";
+      const ico = s.done ? "✅" : i === firstPending ? "⚙️" : "○";
+      return `
+        <div class="tl-item">
+          <div class="tl-dot ${cls}">${ico}</div>
+          <div class="tl-content">
+            <div class="tl-title">${s.label}</div>
+            <div class="tl-time">${s.time || (i === firstPending ? "กำลังดำเนินการ" : "รอดำเนินการ")}</div>
+          </div>
+        </div>`;
+    }).join("");
+    document.getElementById("timeline").innerHTML = html;
+  }
+
+  // =============================================
+  //  รูปภาพหลังซ่อม
+  // =============================================
+  document.getElementById("afterImageInput").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      compressImage(ev.target.result, 800, 0.7, compressed => {
+        afterBase64 = compressed;
+        const prev = document.getElementById("afterPreview");
+        prev.src = compressed;
+        prev.style.display = "block";
+        document.getElementById("afterImgOk").style.display = "block";
+        document.getElementById("afterUploadBox").style.borderColor = "#27AE60";
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function compressImage(b64, maxW, q, cb) {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const r = Math.min(maxW / img.width, 1);
+      c.width = img.width * r; c.height = img.height * r;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL("image/jpeg", q));
+    };
+    img.src = b64;
+  }
+
+  // =============================================
+  //  Toggle ช่างนอก
+  // =============================================
+  function toggleOutside(el) {
+    document.getElementById("outsideTechSection").style.display =
+      el.checked ? "block" : "none";
+  }
+
+  // =============================================
+  //  อัปเดตสถานะระหว่างซ่อม (ไม่ปิด Ticket)
+  // =============================================
+  async function updateStatus() {
+    const note = document.getElementById("repairNote").value.trim();
+    if (!note) { alert("กรุณากรอกสรุปการดำเนินการ"); return; }
+
+    showLoading("กำลังอัปเดตสถานะ...");
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "repair_update",
+          ticketId, lineUserId,
+          note,
+          timestamp: new Date().toLocaleString("th-TH")
+        })
+      });
+      hideLoading();
+      alert("✅ อัปเดตสถานะแล้ว หัวหน้าช่างได้รับแจ้งแล้ว");
+    } catch(e) {
+      hideLoading();
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
+  }
+
+  // =============================================
+  //  Submit ผลการซ่อม (ปิด Ticket)
+  // =============================================
+  async function submitResult() {
+    const result = document.querySelector('input[name="repairResult"]:checked');
+    const note   = document.getElementById("repairNote").value.trim();
+
+    if (!result) { alert("กรุณาเลือกผลการดำเนินการ"); return; }
+    if (!note)   { alert("กรุณากรอกสรุปการซ่อม"); return; }
+
+    const outsideTech = document.getElementById("outsideTech").checked;
+    const t5 = new Date().toLocaleString("th-TH", {
+      day:"2-digit", month:"2-digit", year:"numeric",
+      hour:"2-digit", minute:"2-digit", second:"2-digit"
+    });
+
+    showLoading("กำลังบันทึกผล...");
+    document.getElementById("btnSubmit").disabled = true;
+
+    const payload = {
+      type:           "repair_result",
+      ticketId,
+      lineUserId,
+      t5,
+      repairResult:   result.value,
+      repairNote:     note,
+      outsideTech,
+      outsideCompany: outsideTech ? document.getElementById("outsideCompany").value : "",
+      outsideReason:  outsideTech ? document.getElementById("outsideReason").value  : "",
+      afterImageBase64: afterBase64 || "",
+    };
+
+    try {
+      const res  = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      hideLoading();
+      showSuccess(data.mttr, data.totalEng);
+    } catch(e) {
+      hideLoading();
+      document.getElementById("btnSubmit").disabled = false;
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
+  }
+
+  // =============================================
+  //  ถ้าไม่มี ticketId ใน URL → ให้กรอกเอง
+  // =============================================
+  function showTicketInput() {
+    document.body.innerHTML = `
+      <div style="padding:40px 20px; text-align:center; font-family:'Segoe UI',sans-serif;">
+        <div style="font-size:3rem; margin-bottom:12px;">🔍</div>
+        <h2 style="color:#2C3E50; margin-bottom:8px;">ค้นหา Ticket</h2>
+        <p style="color:#888; font-size:0.82rem; margin-bottom:20px;">กรอก Ticket ID ที่ได้รับจากระบบ</p>
+        <input id="tidInput" type="text" placeholder="REP-20250310-001"
+          style="width:100%; padding:14px; border:2px solid #E0E0E0; border-radius:12px; font-size:1rem; text-align:center; margin-bottom:12px;">
+        <button onclick="searchTicket()"
+          style="width:100%; padding:15px; background:#2C3E50; color:white; border:none; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer;">
+          🔍 ค้นหา
+        </button>
+      </div>`;
+  }
+
+  async function searchTicket() {
+    const tid = document.getElementById("tidInput").value.trim().toUpperCase();
+    if (!tid) return;
+    window.location.href = `${window.location.pathname}?ticketId=${tid}`;
+  }
+
+  // =============================================
+  //  UI Helpers
+  // =============================================
+  function showSuccess(mttr, totalEng) {
+    document.getElementById("mainScreen").style.display    = "none";
+    document.getElementById("successScreen").style.display = "block";
+    document.getElementById("mttrDisplay").textContent    = mttr  || "—";
+    document.getElementById("totalDisplay").textContent   = totalEng || "—";
+  }
+
+  function showLoading(text) {
+    document.getElementById("loadingText").textContent = text;
+    document.getElementById("loadingOverlay").classList.add("show");
+  }
+  function hideLoading() {
+    document.getElementById("loadingOverlay").classList.remove("show");
+  }
+</script>
+</body>
+</html>
