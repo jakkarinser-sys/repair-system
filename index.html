@@ -113,6 +113,9 @@
   <p id="loadingText">กำลังส่งข้อมูล...</p>
 </div>
 
+  <!-- UID Banner ชั่วคราว -->
+  <div id="uid-banner" style="display:none; background:#27AE60; color:white; padding:12px 16px; text-align:center; font-size:0.85rem; font-weight:700; word-break:break-all;"></div>
+
 <div id="formScreen">
   <div class="header">
     <h1>🔧 แจ้งซ่อมเครื่องจักร</h1>
@@ -227,6 +230,9 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
       const profile = await liff.getProfile();
       lineUserId = profile.userId;
+      // 🔍 แสดง userId ชั่วคราว — ลบออกหลังได้ค่าแล้ว
+      document.getElementById("uid-banner").textContent = "👤 Your Line UserID: " + lineUserId;
+      document.getElementById("uid-banner").style.display = "block";
     } catch (e) {
       console.warn("LIFF init failed:", e);
       lineUserId = "test-" + Date.now();
