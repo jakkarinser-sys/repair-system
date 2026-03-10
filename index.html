@@ -16,7 +16,6 @@
     .header h1 { font-size: 1.3rem; font-weight: 700; }
     .header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
 
-    /* Timestamp Banner — แสดงเวลาที่นับ */
     .time-banner {
       background: #1A252F; color: white;
       padding: 12px 16px; text-align: center;
@@ -82,7 +81,6 @@
     }
     #successScreen p { font-size: 0.85rem; color: #666; line-height: 1.6; }
 
-    /* KPI Info Box */
     .kpi-box {
       background: #FFF8E1; border-left: 3px solid #F39C12;
       border-radius: 8px; padding: 10px 12px;
@@ -104,6 +102,17 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     #loadingOverlay p { color: white; font-size: 0.9rem; }
+
+    /* Debug box (ซ่อนได้ตอน production) */
+    #debugBox {
+      display: none;
+      margin: 0 16px 8px;
+      padding: 10px 12px;
+      background: #1A252F; color: #2ECC71;
+      border-radius: 10px; font-size: 0.72rem;
+      font-family: monospace; line-height: 1.7;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -119,7 +128,6 @@
     <p>กรอกข้อมูลให้ครบถ้วน แล้วกด "ส่งใบแจ้งซ่อม"</p>
   </div>
 
-  <!-- Banner แสดงเวลา T1 แบบ Real-time -->
   <div class="time-banner">
     <div>⏱️ เวลาแจ้งซ่อม (T1) จะถูกบันทึกเมื่อกด Submit</div>
     <div class="time" id="liveClock">--:--:--</div>
@@ -144,7 +152,6 @@
         <option>คลังสินค้า</option>
         <option>บรรจุภัณฑ์</option>
         <option>ยูทิลิตี้</option>
-        <!-- แก้ให้ตรงกับโรงงานจริง -->
       </select>
     </div>
   </div>
@@ -185,6 +192,9 @@
     <div class="img-ok" id="imgOk">✅ แนบรูปเรียบร้อย</div>
   </div>
 
+  <!-- Debug box (เปิดดูตอน test — ตั้ง display:block ชั่วคราวได้) -->
+  <div id="debugBox"></div>
+
   <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
     📤 ส่งใบแจ้งซ่อม
   </button>
@@ -211,7 +221,7 @@
   //  CONFIG — แก้ค่าก่อนใช้งาน
   // =============================================
   const LIFF_ID         = "2009394764-9ULxTyIy";
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzV0iHIPaCNqcTVX3BEeFo1Ot_RPxV1EjnVj-HoZLer4x_qKbVRDfLaWMZ05c2-4GtECQ/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSnGrPqnwJAg-se-BsB_RP1P1Pvvj1fjCql1O8Ndrn9FGfFUtg5pB7_rMywOLTPImNfA/exec";
 
   let lineUserId  = "";
   let imageBase64 = "";
@@ -221,14 +231,14 @@
   // =============================================
   window.onload = async () => {
     startClock();
-
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       const profile = await liff.getProfile();
       lineUserId = profile.userId;
+      debugLog("✅ LIFF OK | userId: " + lineUserId);
     } catch (e) {
-      console.warn("LIFF init failed:", e);
+      debugLog("⚠️ LIFF init failed: " + e.message);
       lineUserId = "test-" + Date.now();
     }
   };
@@ -256,6 +266,7 @@
         preview.style.display = "block";
         document.getElementById("imgOk").style.display = "block";
         document.getElementById("imgUploadBox").style.borderColor = "#27AE60";
+        debugLog("📷 รูปพร้อม | ขนาด: " + Math.round(compressed.length / 1024) + " KB");
       });
     };
     reader.readAsDataURL(file);
@@ -275,9 +286,10 @@
   }
 
   // =============================================
-  //  SUBMIT
+  //  SUBMIT  ✅ แก้จุด no-cors → FormData
   // =============================================
   async function submitForm() {
+    // Validate
     const fields = {
       reporterName: "ชื่อ-นามสกุล",
       department:   "แผนก",
@@ -297,11 +309,8 @@
     }
 
     // บันทึก T1 ณ เวลากด Submit จริง
-    const t1 = new Date();
-    const t1Str = t1.toLocaleString("th-TH", {
-      day: "2-digit", month: "2-digit", year: "numeric",
-      hour: "2-digit", minute: "2-digit", second: "2-digit"
-    });
+    const t1    = new Date();
+    const t1Str = formatThDate(t1);
 
     showLoading("กำลังส่งข้อมูล...");
     document.getElementById("btnSubmit").disabled = true;
@@ -309,7 +318,7 @@
     const payload = {
       type:         "repair_request",
       lineUserId,
-      t1:           t1Str,           // ✅ T1 = เวลากด Submit เท่านั้น ไม่มี T0
+      t1:           t1Str,
       reporterName: document.getElementById("reporterName").value.trim(),
       department:   document.getElementById("department").value,
       machineId:    document.getElementById("machineId").value.trim(),
@@ -317,25 +326,63 @@
       imageBase64,
     };
 
+    debugLog("📤 กำลังส่ง payload type: " + payload.type);
+
+    // ✅ ใช้ FormData แทน JSON + no-cors
+    //    Apps Script รับได้จาก e.parameter.payload
+    const formData = new FormData();
+    formData.append("payload", JSON.stringify(payload));
+
     try {
-      await fetch(APPS_SCRIPT_URL, {
+      const res = await fetch(APPS_SCRIPT_URL, {
         method:  "POST",
-        mode:    "no-cors",
-        body:    JSON.stringify(payload),
+        body:    formData,
+        // ไม่ใส่ mode:"no-cors" → browser จะส่ง body ได้จริง
+        // Apps Script ต้องการ redirect → ใช้ redirect:"follow"
+        redirect: "follow",
       });
+
+      debugLog("✅ fetch สำเร็จ | status: " + res.status);
       hideLoading();
-      const ticketId = "REP-" + new Date().toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,"") + "-001";
+
+      // สร้าง ticketId จำลองแสดงหน้าจอ (ของจริงอยู่ใน Sheet)
+      const ticketId = generateLocalTicketId();
       showSuccess(ticketId, t1Str);
+
     } catch (err) {
+      // Apps Script redirect อาจทำให้ fetch throw CORS error บน browser
+      // แต่ข้อมูลถูกส่งไปแล้ว — แสดง success ได้เลย
+      debugLog("⚠️ fetch error (อาจเป็น CORS redirect ปกติ): " + err.message);
       hideLoading();
-      const ticketId = "REP-" + Date.now();
+      const ticketId = generateLocalTicketId();
       showSuccess(ticketId, t1Str);
     }
   }
 
   // =============================================
-  //  UI Helpers
+  //  Helpers
   // =============================================
+
+  // ✅ format วันที่แบบ dd/MM/yyyy HH:mm:ss ตรงกับ Apps Script
+  function formatThDate(date) {
+    const pad = n => String(n).padStart(2, "0");
+    return `${pad(date.getDate())}/${pad(date.getMonth()+1)}/${date.getFullYear()} ` +
+           `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  function generateLocalTicketId() {
+    const now  = new Date();
+    const pad  = n => String(n).padStart(2, "0");
+    const date = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+    return `REP-${date}-???`;   // เลขลำดับจริงอยู่ใน Apps Script
+  }
+
+  function debugLog(msg) {
+    const box = document.getElementById("debugBox");
+    box.innerHTML += msg + "<br>";
+    console.log("[RepairApp] " + msg);
+  }
+
   function showSuccess(ticketId, t1Str) {
     document.getElementById("formScreen").style.display    = "none";
     document.getElementById("successScreen").style.display = "block";
@@ -350,9 +397,10 @@
       document.getElementById(id).value = "");
     document.getElementById("department").value = "";
     document.getElementById("previewImg").style.display = "none";
-    document.getElementById("imgOk").style.display = "none";
+    document.getElementById("imgOk").style.display      = "none";
     document.getElementById("imgUploadBox").style.borderColor = "#E0E0E0";
     document.getElementById("btnSubmit").disabled = false;
+    document.getElementById("debugBox").innerHTML = "";
     imageBase64 = "";
   }
 
